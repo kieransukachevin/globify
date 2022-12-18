@@ -32,7 +32,7 @@ function getAuthorizationToken (req, res, next) {
         console.log('Error: State mismatch')
     }
     else {
-        var authOptions = {
+        const authOptions = {
             url: 'https://accounts.spotify.com/api/token',
             form: {
             code: code,
@@ -75,6 +75,10 @@ function getUserData (req, res, next) {
     }
 
     console.log('res:', res.locals.accessData);
+
+    const params = {
+        
+    }
 
     request.get()
 }
