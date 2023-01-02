@@ -7,7 +7,7 @@ export async function loginButtonClicked() {
     const client_id = '3d474cad631f40028c1f3909186b0686';
     const redirect_uri = 'http://localhost:3000/';
     const state = generateRandomString(16);
-    const scope = 'user-read-private user-read-email';
+    const scope = 'user-read-private user-read-email user-top-read';
 
     console.log('login');
 
@@ -30,7 +30,7 @@ export function getCodeParameter() {
     
     if (code && state) {
 
-        sendCode(code, state);
+        getUserData(code, state);
         
     }
 }
@@ -45,19 +45,23 @@ function generateRandomString(size) {
     return result;
 }
 
-function sendCode(code, state) {
-    const mainArea = document.getElementById('main-area-1');
-    setLoadingArea(mainArea);
+function getUserData(code, state) {
+
+    // Loading
+    setLoadingArea(document.getElementById('main-area-1'));
 
     axios.post('http://localhost:4200/code', {
         code: code,
         state: state
     })
     .then(function (response) {
-        console.log(response);
+        // var names = '';
+        // (response.data.items).forEach(element => {
+        //     names += element.name + ', '
+        // });
     })
     .catch(function (error) {
-        console.log(error);
+        console.log('error:', error);
     });
 }
 
@@ -74,4 +78,14 @@ function setLoadingArea(area) {
 
     // Add to the area
     area.replaceChildren(img, header);
+}
+
+function displayUserData(area, data) {
+    var names = '';
+    (data).forEach(element => {
+        names += element.name + ', '
+    });
+    area.replaceChildren(
+        document.createElement('p').innerHTML = names
+    );
 }

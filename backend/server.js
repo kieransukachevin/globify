@@ -32,7 +32,7 @@ function getAuthorizationToken (req, res, next) {
         console.log('Error: State mismatch')
     }
     else {
-        const authOptions = {
+        var authOptions = {
             url: 'https://accounts.spotify.com/api/token',
             form: {
             code: code,
@@ -49,21 +49,19 @@ function getAuthorizationToken (req, res, next) {
     }
 
     request.post(authOptions, (error, response, body) => {
-        if (error) {
+        if (JSON.parse(error)) {
             res.locals.error = error;
             next();
         }
 
-        if (body) {
-            res.locals.accessData = body;
-            next();
-        }
+        res.locals.accessData = body;
+        next();
     });
 }
 
-// User Data
+// User's Top Artists
 
-function getUserData (req, res, next) {
+function getTopArtists (req, res, next) {
 
     if (res.locals.error) {
         next();
@@ -74,24 +72,97 @@ function getUserData (req, res, next) {
         next();
     }
 
-    console.log('res:', res.locals.accessData);
-
     const params = {
-        
+        url: 'https://api.spotify.com/v1/me/top/artists',
+        headers: {
+            'Authorization': 'Bearer ' + res.locals.accessData.access_token,
+            'Content-Type': 'application/json'
+        },
     }
 
-    request.get()
+    request.get(params, (error, response, body) => {
+        if (JSON.parse(error)) {
+            res.locals.error = error;
+            next();
+        }
+
+        res.locals.topArtists = [];
+        JSON.parse(body).items.forEach(element => {
+            res.locals.topArtists.push({
+                id: element.id,
+                name: element.name
+            });
+        });
+        next();
+    });
+}
+
+// Artist
+
+function getWikipediaArticleId (req, res, next) {
+    console.log(res.locals.topArtists);
+
+    // Get wikipedia article title id
+
+    var url = "https://en.wikipedia.org/w/api.php"; 
+
+    var params = {
+        prop: "info",
+        action: "query",
+        titles: res.locals.topArtists[0].name,
+        format: "json"
+    };
+
+    url = url + "?origin=*";
+    Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
+
+    request.get(url, (error, response, body) => {
+        if (JSON.parse(error)) {
+            res.locals.error = error;
+            next();
+        }
+
+        res.locals.topArtists[0].entity = Object.keys(JSON.parse(body).query.pages)[0];
+        console.log('entity', res.locals.topArtists[0].entity);
+
+        next();
+    })
+}
+
+function getWikiData (req, res, next) {
+  // Get wikipedia data
+
+  var url = "https://wikidata.org/w/api.php";
+
+  var params = {
+      action: "wbgetclaims",
+      entity: "Q392",
+      property: "P569",
+      format: "json"
+  }
+
+  url = url + "?origin=*";
+  Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
+
+  request.get(url, (error, response, body) => {
+      console.log('bio', body);
+
+      next();
+  })
 }
 
 
 // Code Endpoint
 
-const codeMiddleWare = [getAuthorizationToken, getUserData];
+const codeMiddleWare = [getAuthorizationToken, getTopArtists, getWikipediaArticleId, getWikiData];
 app.post('/code', codeMiddleWare, (req, res) => {
 
     if (res.locals.error) {
         res.send(res.locals.error);
+        res.locals.error = null;
     }
+
+    res.send(res.locals.userData);
 });
 
 const port = process.env.PORT || 4200;
