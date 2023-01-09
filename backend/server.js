@@ -89,72 +89,114 @@ function getTopArtists (req, res, next) {
         res.locals.topArtists = [];
         JSON.parse(body).items.forEach(element => {
             res.locals.topArtists.push({
-                id: element.id,
                 name: element.name
             });
         });
+
         next();
     });
 }
 
 // Artist
 
-function getWikipediaArticleId (req, res, next) {
+async function getWikiDataIdOfArtist (req, res, next) {
     console.log(res.locals.topArtists);
 
-    // Get wikipedia article title id
-
-    var url = "https://en.wikipedia.org/w/api.php"; 
+    var url = "https://en.wikipedia.org/w/api.php";
 
     var params = {
-        prop: "info",
+        prop: "pageprops",
+        ppprop: "wikibase_item",
         action: "query",
-        titles: res.locals.topArtists[0].name,
+        titles: "none",
+        formatversion: "2",
         format: "json"
     };
+
+    res.locals.topArtists.forEach(async artist => {
+
+        params.titles = artist.name;    // Name of artist
+
+        url = url + "?origin=*";
+        Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
+    
+        await request.get(url, (error, response, body) => {
+            if (JSON.parse(error)) {
+                res.locals.error = error;
+            }
+            else {
+                console.log(body);
+    
+                // artist.artist_wikibase_item = JSON.parse(body).query.pages[0].pageprops.wikibase_item;    
+            }    
+        });
+    });
+
+    next();
+}
+
+// Birth place
+
+async function getWikiDataIdOfBirthPlace (req, res, next) {
+
+    console.log('here!');
+
+    var url = "https://wikidata.org/w/api.php";
+
+    var params = {
+        action: "wbgetclaims",
+        entity: res.locals.topArtists[0].artist_wikibase_item,
+        property: "P19",
+        format: "json"
+    }
 
     url = url + "?origin=*";
     Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
 
-    request.get(url, (error, response, body) => {
+    await request.get(url, (error, response, body) => {
+        if (JSON.parse(error)) {
+            res.locals.error = error;
+            next();
+        }
+        // console.log(
+        //     JSON.parse(body).claims.P19[0].mainsnak.datavalue.value.id  // Birth place wikidata_id
+        // );
+
+        res.locals.topArtists[0].birthplace_wikibase_item = JSON.parse(body).claims.P19[0].mainsnak.datavalue.value.id;
+
+        next();
+    });
+}
+
+async function getNameOfBirthPlace (req, res, next) {
+    
+    var url = "https://wikidata.org/w/api.php";
+
+    var params = {
+        action: "wbgetentities",
+        ids: res.locals.topArtists[0].birthplace_wikibase_item,
+        format: "json"
+    }
+
+    url = url + "?origin=*";
+    Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
+
+    await request.get(url, (error, response, body) => {
         if (JSON.parse(error)) {
             res.locals.error = error;
             next();
         }
 
-        res.locals.topArtists[0].entity = Object.keys(JSON.parse(body).query.pages)[0];
-        console.log('entity', res.locals.topArtists[0].entity);
+        res.locals.topArtists[0].birthplace = JSON.parse(body).entities[res.locals.topArtists[0].birthplace_wikibase_item].labels.en.value;
 
         next();
-    })
-}
-
-function getWikiData (req, res, next) {
-  // Get wikipedia data
-
-  var url = "https://wikidata.org/w/api.php";
-
-  var params = {
-      action: "wbgetclaims",
-      entity: "Q392",
-      property: "P569",
-      format: "json"
-  }
-
-  url = url + "?origin=*";
-  Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
-
-  request.get(url, (error, response, body) => {
-      console.log('bio', body);
-
-      next();
-  })
+    });
 }
 
 
 // Code Endpoint
 
-const codeMiddleWare = [getAuthorizationToken, getTopArtists, getWikipediaArticleId, getWikiData];
+const codeMiddleWare = [getAuthorizationToken, getTopArtists, getWikiDataIdOfArtist, getWikiDataIdOfBirthPlace, getNameOfBirthPlace];
 app.post('/code', codeMiddleWare, (req, res) => {
 
     if (res.locals.error) {
