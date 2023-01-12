@@ -47,7 +47,7 @@ function generateRandomString(size) {
 
 function getUserData(code, state) {
 
-    // Loading
+    // Loading assets
     setLoadingArea(document.getElementById('main-area-1'));
 
     axios.post('http://localhost:4200/code', {
@@ -55,10 +55,7 @@ function getUserData(code, state) {
         state: state
     })
     .then(function (response) {
-        // var names = '';
-        // (response.data.items).forEach(element => {
-        //     names += element.name + ', '
-        // });
+        console.log(response);
     })
     .catch(function (error) {
         console.log('error:', error);
