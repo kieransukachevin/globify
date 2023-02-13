@@ -1,18 +1,21 @@
 
 * {
-    font-family: sans-serif;
+    font-family: Arial, sans-serif;
     font-weight: normal;
     letter-spacing: 0.08em;
 }
+
 h2 {
     text-align: center;
 }
+
 .main-area {
     display: grid;
     justify-content: center;
     align-content: center;
     height: 100vh;
 }
+
 .loader {
     display: block;
     background-color: transparent;
@@ -20,10 +23,11 @@ h2 {
     border-width: 0.5em;
     border-radius: 50%;
     border-color: transparent;
-    animation: spin 1s infinite ;
+    animation: spin 1s infinite;
     height: 100px;
     width: 100px;
 }
+
 @keyframes spin {
     0% {
         transform: rotate(0deg)
