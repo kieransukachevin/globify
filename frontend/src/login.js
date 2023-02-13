@@ -2,14 +2,14 @@
 import css from './styles/styles.css';
 import globe from './assets/globe.jpg';
 import axios from 'axios';
+import { Buffer } from 'buffer';
 
 export async function loginButtonClicked() {
+
     const client_id = '3d474cad631f40028c1f3909186b0686';
     const redirect_uri = 'http://localhost:3000/';
     const state = generateRandomString(16);
     const scope = 'user-read-private user-read-email user-top-read';
-
-    console.log('login');
 
     const url = new URL('https://accounts.spotify.com/authorize?');
     const params = new URLSearchParams(url.search);
@@ -22,7 +22,31 @@ export async function loginButtonClicked() {
     location.href = url + params.toString();
 }
 
-export function getCodeParameter() {
+export async function loginSetup() {
+
+    if ( !window.sessionStorage.getItem("authToken") ) {    // Check if access token has already been retrieved
+        
+        var codeState = getCodeParameter();
+
+        if (codeState) {
+
+            var authToken = await getAuthorizationToken (codeState.code, codeState.state);
+    
+            window.sessionStorage.setItem("authToken", authToken);
+    
+        }
+        else {
+            return null;
+        }
+    }
+
+    var userData = await getUserData(window.sessionStorage.getItem("authToken"));
+    
+    return userData;
+}
+
+function getCodeParameter() {
+
     const url_string = window.location.href;
     const url = new URL(url_string);
     const code = url.searchParams.get("code");
@@ -30,12 +54,50 @@ export function getCodeParameter() {
     
     if (code && state) {
 
-        getUserData(code, state);
+        return {"code": code, "state": state}
         
+    }
+    else {
+        return null;
     }
 }
 
+async function getAuthorizationToken (code, state) {
+
+    const redirect_uri = 'http://localhost:3000/';
+    const client_id = '3d474cad631f40028c1f3909186b0686';
+    const client_secret = 'b49248f3d4df4064a0f1ba0d8d943354';
+
+    var authToken = null;
+
+    if (state === null) {
+        console.log('Error: State mismatch')
+    }
+    else {
+        const headers = {
+            "Authorization":
+                'Basic ' +
+                Buffer.from(client_id + ':' + client_secret).toString('base64'),
+            "Content-Type":
+                'application/x-www-form-urlencoded'
+        }
+            
+        const { data } = await axios.post('https://accounts.spotify.com/api/token', {
+            grant_type: 'authorization_code',
+            code: code,
+            redirect_uri: redirect_uri
+        },
+        { headers },
+        )
+        
+        authToken = data.access_token
+    }
+
+    return authToken;
+}
+
 function generateRandomString(size) {
+
     var result = '';
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const charactersLength = characters.length
@@ -45,24 +107,29 @@ function generateRandomString(size) {
     return result;
 }
 
-function getUserData(code, state) {
+async function getUserData(authToken) {
 
     // Loading assets
     setLoadingArea(document.getElementById('main-area-1'));
 
-    axios.post('http://localhost:4200/code', {
-        code: code,
-        state: state
+    var data = null;    // Data to return
+
+    await axios.post('http://localhost:4200/code', {
+        accessToken: authToken
     })
     .then(function (response) {
-        console.log(response);
+        data = response.data;
     })
     .catch(function (error) {
         console.log('error:', error);
+        data = error;
     });
+
+    return data;
 }
 
 function setLoadingArea(area) {
+
     // Globe image (Loading)
     const img = new Image();
     img.src = globe;
@@ -78,6 +145,7 @@ function setLoadingArea(area) {
 }
 
 function displayUserData(area, data) {
+
     var names = '';
     (data).forEach(element => {
         names += element.name + ', '

@@ -22,44 +22,6 @@ app.get('/', (req, res) => {
 
 });
 
-// Authorization Token
-
-function getAuthorizationToken (req, res, next) {
-    var code = req.body.code || null;
-    var state = req.body.state || null;
-
-    if (state === null) {
-        console.log('Error: State mismatch')
-    }
-    else {
-        var authOptions = {
-            url: 'https://accounts.spotify.com/api/token',
-            form: {
-            code: code,
-            redirect_uri: redirect_uri,
-            grant_type: 'authorization_code',
-            client_id: client_id,
-            client_secret: client_secret
-            },
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            json: true
-        };
-    }
-
-    request.post(authOptions, (error, response, body) => {
-        if (body.hasOwnProperty("error")) {
-            res.locals.error =  body;
-            next();
-        }
-        else {
-            res.locals.accessData = body;
-            next();
-        }
-    });
-}
-
 // User's Top Artists
 
 function getTopArtists (req, res, next) {
@@ -68,7 +30,7 @@ function getTopArtists (req, res, next) {
         next();
     }
 
-    else if (!res.locals.accessData) {
+    else if (!req.body.accessToken) {
         res.locals.error = 'Error retrieving access token';
         next();
     }
@@ -80,7 +42,7 @@ function getTopArtists (req, res, next) {
         const params = {
             url: 'https://api.spotify.com/v1/me/top/artists',
             headers: {
-                'Authorization': 'Bearer ' + res.locals.accessData.access_token,
+                'Authorization': 'Bearer ' + req.body.accessToken,
                 'Content-Type': 'application/json'
             },
         }
@@ -113,22 +75,21 @@ function getWikiDataIdsOfArtists (req, res, next) {
     }
 
     else {
-        var url = "https://en.wikipedia.org/w/api.php";
-
-        var params = {
-            prop: "pageprops",
-            ppprop: "wikibase_item",
-            action: "query",
-            titles: "none",
-            formatversion: "2",
-            format: "json"
-        };
     
         var size = res.locals.topArtists.size;
         var i = 0;
         for (const [artist] of res.locals.topArtists.entries()) {
-    
-            params.titles = artist.name;    // Name of artist
+
+            var url = "https://en.wikipedia.org/w/api.php";
+
+            var params = {
+                prop: "pageprops",
+                ppprop: "wikibase_item",
+                action: "query",
+                titles: artist.name,    // Name of artist
+                formatversion: "2",
+                format: "json"
+            };
     
             url = url + "?origin=*";
             Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
@@ -150,7 +111,7 @@ function getWikiDataIdsOfArtists (req, res, next) {
     }
 }
 
-// Birth place
+// Birth place Wiki Data claim
 
 function getWikiDataIdsOfBirthPlaces (req, res, next) {
 
@@ -159,21 +120,20 @@ function getWikiDataIdsOfBirthPlaces (req, res, next) {
     }
 
     else {
-        var url = "https://wikidata.org/w/api.php";
-
-        var params = {
-            action: "wbgetclaims",
-            entity: "none",
-            property: "P19",
-            format: "json"
-        }
     
         const size = res.locals.topArtists.size;
         var i = 0;
         for (const [artist] of res.locals.topArtists.entries()) {
             console.log(artist);
-            
-            params.entity = artist.artist_wikibase_item;    // Name of artist
+
+            var url = "https://wikidata.org/w/api.php";
+
+            var params = {
+                action: "wbgetclaims",
+                entity: artist.artist_wikibase_item,
+                property: "P19",
+                format: "json"
+            }
     
             url = url + "?origin=*";
             Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
@@ -195,6 +155,8 @@ function getWikiDataIdsOfBirthPlaces (req, res, next) {
     }
 }
 
+// Birth place city
+
 function getNameOfBirthPlaceCity (req, res, next) {
 
     if (res.locals.error) {
@@ -202,19 +164,18 @@ function getNameOfBirthPlaceCity (req, res, next) {
     }
     
     else {
-        var url = "https://wikidata.org/w/api.php";
-
-        var params = {
-            action: "wbgetentities",
-            ids: "none",
-            format: "json"
-        }
     
         const size = res.locals.topArtists.size;
         var i = 0;
         for (const [artist] of res.locals.topArtists.entries()) { 
-    
-            params.ids = artist.birthplace_wikibase_item;
+
+            var url = "https://wikidata.org/w/api.php";
+
+            var params = {
+                action: "wbgetentities",
+                ids: artist.birthplace_wikibase_item,
+                format: "json"
+            }
     
             url = url + "?origin=*";
             Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
@@ -237,6 +198,8 @@ function getNameOfBirthPlaceCity (req, res, next) {
     }
 }
 
+// Birth place country
+
 function getNameOfBirthPlaceCountry (req, res, next) {
 
     if (res.locals.error) {
@@ -244,19 +207,18 @@ function getNameOfBirthPlaceCountry (req, res, next) {
     }
     
     else {
-        var url = "https://wikidata.org/w/api.php";
-
-        var params = {
-            action: "wbgetentities",
-            ids: "none",
-            format: "json"
-        }
     
         const size = res.locals.topArtists.size;
         var i = 0;
         for (const [artist] of res.locals.topArtists.entries()) { 
-    
-            params.ids = artist.country_wikibase_item;
+
+            var url = "https://wikidata.org/w/api.php";
+
+            var params = {
+                action: "wbgetentities",
+                ids: artist.country_wikibase_item,
+                format: "json"
+            }
     
             url = url + "?origin=*";
             Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
@@ -277,6 +239,8 @@ function getNameOfBirthPlaceCountry (req, res, next) {
     }
 }
 
+// Latitude and longitude of birth place
+
 function getCoordinatesOfBirthPlaces (req, res, next) {
     
     if (res.locals.error) {
@@ -284,23 +248,35 @@ function getCoordinatesOfBirthPlaces (req, res, next) {
     }
 
     else {
-        // ?q={city name},{state code},{country code}&limit={limit}&appid={API key}
-        var url = "http://api.openweathermap.org/geo/1.0/direct";
 
-        var params = {
-            q: "none",
-            appid: "001b09f62790ee8c13aecfb881d3516c"
-        }
-
+        const size = res.locals.topArtists.size;
+        var i = 0;
         for (const [artist] of res.locals.topArtists.entries()) {
-            
-            params.q = artist.birthplace + "," + artist.country;
+
+            // ?q={city name},{state code},{country code}&limit={limit}&appid={API key}
+            var url = "http://api.openweathermap.org/geo/1.0/direct";
+
+            var params = {
+                q: artist.birthplace + "," + artist.country,
+                limit: "1",
+                appid: "001b09f62790ee8c13aecfb881d3516c"
+            }
 
             url = url + "?origin=*";
             Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
         
             request.get(url, (error, response, body) => {
-                console.log('location', body);
+                if (!JSON.parse(body)) {
+                    res.locals.topArtists.delete(artist);
+                }
+                else {
+                    artist.lat = JSON.parse(body)[0].lat;
+                    artist.lon = JSON.parse(body)[0].lon;
+                }
+                i++;
+                if (i == size) {    // After the last artist, continue to next middleware function
+                    next();
+                }
             });
         }
     }
@@ -309,9 +285,9 @@ function getCoordinatesOfBirthPlaces (req, res, next) {
 // Code Endpoint
 
 const codeMiddleWare = [
-    getAuthorizationToken, getTopArtists, getWikiDataIdsOfArtists, 
-    getWikiDataIdsOfBirthPlaces, getNameOfBirthPlaceCity, getNameOfBirthPlaceCountry,
-    getCoordinatesOfBirthPlaces
+    getTopArtists, getWikiDataIdsOfArtists, 
+    getWikiDataIdsOfBirthPlaces, getNameOfBirthPlaceCity, 
+    getNameOfBirthPlaceCountry, getCoordinatesOfBirthPlaces
 ];
 app.post('/code', codeMiddleWare, (req, res) => {
 
@@ -323,10 +299,17 @@ app.post('/code', codeMiddleWare, (req, res) => {
     else {
         var artists = {}
         for (const [artist] of res.locals.topArtists.entries()) {
-            artists[artist.name] = artist.birthplace;
+            artists[artist.name] = 
+            {
+                "birthplace": artist.birthplace,
+                "country": artist.country,
+                "lat": artist.lat,
+                "lon": artist.lon
+            };
         }
     
         res.json(JSON.stringify(artists));
+        console.log('success!');
     }
 });
 
