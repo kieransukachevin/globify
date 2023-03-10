@@ -6,7 +6,7 @@ import axios from 'axios';
 
 async function setup() {
 
-    // var userData = await login.loginSetup();    // Retrieve data // TEST
+    // let userData = await login.loginSetup();    // Retrieve data // TEST
     globe.setupGlobe(document.getElementById('main-area-1')); // Setup    // TEST
 
     console.log(userData);
@@ -38,4 +38,4 @@ function setLoginButton(area) {
     area.replaceChildren(header, button);
 }
 
-window.onload = setup;
+setup();

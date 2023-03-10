@@ -40,7 +40,7 @@ window.addEventListener('resize', () =>
  */
 // Perspective camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.5, 2000);
-const cameraBaseZ = 3;
+const cameraBaseZ = 100;
 camera.position.x = 0;
 camera.position.y = 0;
 camera.position.z = cameraBaseZ;
@@ -72,7 +72,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
  */
 // Point Light
 const pointLight = new THREE.PointLight(0xF5F5DC, 1);
-pointLight.position.set(-0.46, 0.47, 2.06);
+pointLight.position.set(-0.46, 0.47, 80);
 scene.add(pointLight);
 
 
@@ -84,7 +84,7 @@ scene.add( ambientLight );
 /**
  * Sphere
  */
-const sphereMinZoom = 1.5;
+const sphereMinZoom = 50;
 var geometry = new THREE.SphereGeometry(sphereMinZoom, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);;
 var material = new THREE.MeshStandardMaterial();
 material.metalness = 0.5
@@ -96,6 +96,16 @@ var sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 
 
+var geometry2 = new THREE.SphereGeometry(0.5, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);;
+var material2 = new THREE.MeshStandardMaterial();
+material2.color = (0xFFFFFF);
+material2.metalness = 0.5
+material2.roughness = 0.9
+var sphere2 = new THREE.Mesh(geometry2, material2);
+scene.add(sphere2);
+sphere2.position.z = 50;
+sphere.attach(sphere2);
+
 /**
  * Raycaster
  */
@@ -106,6 +116,7 @@ const raycaster = new THREE.Raycaster();
  * Pointer, pointer events
  */
 const pointer = new THREE.Vector2();
+const lastPointer = new THREE.Vector2(0, 0);
 var globeGrabbed = false;
 
 // Pointer down
@@ -130,14 +141,19 @@ var pointerup = function ( event ) {
 // Pointer move
 var pointermove = function ( event ) {
 
-	const lastX = pointer.x;
-	const lastY = pointer.y;
+	if (globeGrabbed) {
+		lastPointer.x = pointer.x;
+		lastPointer.y = pointer.y;
+	}
+
 	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
 	if (globeGrabbed) {	// Change the globe rotation if grabbed
-		sphere.rotation.y += pointer.x - lastX;
-		sphere.rotation.x -= pointer.y - lastY;
+
+		sphere.rotation.y += pointer.x - lastPointer.x;
+		sphere.rotation.x -= pointer.y - lastPointer.y;
+
 	}
 
 }
@@ -217,7 +233,6 @@ var render = function () {
 	// you must do this every frame
 	const delta = clock.getDelta();
 	animationMixer.update(delta);
-	console.log('z',camera.position.z);
 
     renderer.render(scene, camera);
 };

@@ -26,11 +26,11 @@ export async function loginSetup() {
 
     if ( !window.sessionStorage.getItem("authToken") ) {    // Check if access token has already been retrieved
         
-        var codeState = getCodeParameter();
+        let codeState = getCodeParameter();
 
         if (codeState) {
 
-            var authToken = await getAuthorizationToken (codeState.code, codeState.state);
+            let authToken = await getAuthorizationToken (codeState.code, codeState.state);
     
             window.sessionStorage.setItem("authToken", authToken);
     
@@ -40,7 +40,7 @@ export async function loginSetup() {
         }
     }
 
-    var userData = await getUserData(window.sessionStorage.getItem("authToken"));
+    let userData = await getUserData(window.sessionStorage.getItem("authToken"));
     
     return userData;
 }
@@ -98,10 +98,10 @@ async function getAuthorizationToken (code, state) {
 
 function generateRandomString(size) {
 
-    var result = '';
-    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const charactersLength = characters.length
-    for (var i = 0; i < size; i++) {
+    for (let i = 0; i < size; i++) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
@@ -112,7 +112,7 @@ async function getUserData(authToken) {
     // Loading assets
     setLoadingArea(document.getElementById('main-area-1'));
 
-    var data = null;    // Data to return
+    let data = null;    // Data to return
 
     await axios.post('http://localhost:4200/code', {
         accessToken: authToken
@@ -146,7 +146,7 @@ function setLoadingArea(area) {
 
 function displayUserData(area, data) {
 
-    var names = '';
+    let names = '';
     (data).forEach(element => {
         names += element.name + ', '
     });
