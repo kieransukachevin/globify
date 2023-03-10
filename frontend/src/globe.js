@@ -8,7 +8,7 @@ import * as dat from 'dat.gui'
 /**
  * Scene
  */
-var scene = new THREE.Scene();
+let scene = new THREE.Scene();
 
 
 /**
@@ -50,7 +50,7 @@ scene.add(camera);
 /**
  * Canvas
  */
-var canvas = document.createElement('canvas');
+let canvas = document.createElement('canvas');
 canvas.style.position = 'sticky';
 canvas.style.top = 0;
 canvas.style.left = 0;
@@ -85,23 +85,23 @@ scene.add( ambientLight );
  * Sphere
  */
 const sphereMinZoom = 50;
-var geometry = new THREE.SphereGeometry(sphereMinZoom, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);;
-var material = new THREE.MeshStandardMaterial();
+let geometry = new THREE.SphereGeometry(sphereMinZoom, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);;
+let material = new THREE.MeshStandardMaterial();
 material.metalness = 0.5
 material.roughness = 0.9
 const textureLoader = new THREE.TextureLoader();
 const normalTexture = textureLoader.load(globeNormal);
 material.normalMap = normalTexture;
-var sphere = new THREE.Mesh(geometry, material);
+let sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 
 
-var geometry2 = new THREE.SphereGeometry(0.5, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);;
-var material2 = new THREE.MeshStandardMaterial();
+let geometry2 = new THREE.SphereGeometry(0.5, 50, 50, 0, Math.PI * 2, 0, Math.PI * 2);;
+let material2 = new THREE.MeshStandardMaterial();
 material2.color = (0xFFFFFF);
 material2.metalness = 0.5
 material2.roughness = 0.9
-var sphere2 = new THREE.Mesh(geometry2, material2);
+let sphere2 = new THREE.Mesh(geometry2, material2);
 scene.add(sphere2);
 sphere2.position.z = 50;
 sphere.attach(sphere2);
@@ -117,10 +117,10 @@ const raycaster = new THREE.Raycaster();
  */
 const pointer = new THREE.Vector2();
 const lastPointer = new THREE.Vector2(0, 0);
-var globeGrabbed = false;
+let globeGrabbed = false;
 
 // Pointer down
-var pointerdown = function ( event ) {
+let pointerdown = function ( event ) {
 
 	raycaster.setFromCamera({x: pointer.x, y: pointer.y}, camera);
 	const intersect = raycaster.intersectObject(sphere, false);
@@ -132,14 +132,14 @@ var pointerdown = function ( event ) {
 }
 
 // Pointer up
-var pointerup = function ( event ) {
+let pointerup = function ( event ) {
 
 	globeGrabbed = false;
 
 }
 
 // Pointer move
-var pointermove = function ( event ) {
+let pointermove = function ( event ) {
 
 	if (globeGrabbed) {
 		lastPointer.x = pointer.x;
@@ -162,7 +162,7 @@ var pointermove = function ( event ) {
 /**
  * Scroll event
  */
-var scroll = function ( event ) {
+let scroll = function ( event ) {
 
 	camera.position.z = cameraBaseZ - (window.scrollY / document.getElementById('main-area-1').clientHeight);	// Zoom camera in and out
 
@@ -188,7 +188,7 @@ globeSetupAnimationAction.loop = THREE.LoopOnce;
 /**
  * Onload event
  */
-var onLoad = function ( event ) {
+let onLoad = function ( event ) {
 
 	window.scroll({
 		top: 0,
@@ -223,7 +223,7 @@ ambientGui.add(ambientLight, 'intensity').min(1).max(10).step(0.01);
  */
 const clock = new THREE.Clock();
 
-var render = function () {
+let render = function () {
     requestAnimationFrame(render);
 
 	// Update sphere rotation
